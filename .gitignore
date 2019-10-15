@@ -1,0 +1,10 @@
+*.zip
+*.swp
+*.pyc
+.env/*
+
+comp451_assignment1_v1_old/
+.vscode/
+.dist/
+.ipynb_checkpoints/
+datasets/
