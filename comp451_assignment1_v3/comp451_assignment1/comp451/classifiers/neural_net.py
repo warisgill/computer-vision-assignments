@@ -134,12 +134,12 @@ class ThreeLayerNet(object):
         # grads['W1'] should store the gradient on W1, and be a matrix of same size #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        grads["W1"] = np.zeros_like(W1)
-        grads["b1"] = np.zeros_like(b1)
-        grads["W2"] = np.zeros_like(W2)
-        grads["b2"] = np.zeros_like(b2)
-        grads["W3"] = np.zeros_like(W3)
-        grads["b3"] = np.zeros_like(b3)
+        # grads["W1"] = np.zeros_like(W1)
+        # grads["b1"] = np.zeros_like(b1)
+        # grads["W2"] = np.zeros_like(W2)
+        # grads["b2"] = np.zeros_like(b2)
+        # grads["W3"] = np.zeros_like(W3)
+        # grads["b3"] = np.zeros_like(b3)
 
         ####### Softmax Layer Backward propagation ### 
         # dLi/dprobs 
@@ -206,6 +206,10 @@ class ThreeLayerNet(object):
         train_acc_history = []
         val_acc_history = []
 
+        if verbose:
+          print("h={},b={}, lr={}, reg ={}".format(self.params["b1"].shape[0], batch_size, learning_rate, reg))
+          # print("lr = {}, reg = {}, hidden_layer_size = {},  batch = {}".format())
+
         for it in range(num_iters):
             X_batch = None
             y_batch = None
@@ -261,6 +265,11 @@ class ThreeLayerNet(object):
                 # Decay learning rate
                 learning_rate *= learning_rate_decay
 
+        if verbose:
+            train_acc = (self.predict(X) == y).mean()
+            val_acc = (self.predict(X_val) == y_val).mean()
+            print("Training Accuracy {t}, Validation Accuracy {v}".format(t=train_acc, v=val_acc))
+        
         return {
           'loss_history': loss_history,
           'train_acc_history': train_acc_history,

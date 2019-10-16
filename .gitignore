@@ -3,8 +3,17 @@
 *.pyc
 .env/*
 
+cifar-10-batches-py/*
+tiny-imagenet-100-A*
+tiny-imagenet-100-B*
+tiny-100-A-pretrained/*
+
+
+
+
+
 comp451_assignment1_v1_old/
 .vscode/
 .dist/
 .ipynb_checkpoints/
-datasets/
+cifar-10-batches-py/
