@@ -26,8 +26,12 @@ def affine_forward(x, w, b):
     # will need to reshape the input into rows.                               #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    # print(x,x.shape)
+    out = np.dot(np.reshape(x,(x.shape[0], w.shape[0])),w) + b
 
-    pass
+    # print("Shapes: x= {x}, w  = {w}, b = {b} ,out = {out}".format(x= x.shape, w= w.shape,b = b.shape,out=out.shape))
+
+    # print("Check",x.shape)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -60,9 +64,18 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    # print("check",dout.shape) 
+    dD =  dout #np.ones((x.shape[0], w.shape[1])) # has shpe of np.dot(x,w)
 
+    dx = np.dot(w, dD.T)
+    dx = dx.T.reshape(x.shape)
+    
+    dw = np.dot((np.reshape(x,(x.shape[0], w.shape[0])).T), dD)
+    db = np.sum(dD, axis=0).reshape((dD.shape[1],))
 
-    pass
+    # db = db.reshape((dD.shape[0],))
+
+    # print("check",db.shape)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -88,7 +101,7 @@ def relu_forward(x):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    out = np.maximum(0,x)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -115,7 +128,8 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # print("Test",dout.shape, x.shape)
+    dx = np.multiply(x>0,dout)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -145,8 +159,9 @@ def leaky_relu_forward(x, lrelu_param):
     # TODO: Implement the ReLU forward pass.                                  #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    # print("hello")
+    # print(alpha)
+    out = ((x < 0)* alpha * x) + (x>=0) * x 
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -176,9 +191,10 @@ def leaky_relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
-
-    pass
+    d1 = np.multiply(x>=0,dout)
+    d2 = np.multiply(x < 0, alpha * dout)
+    
+    dx = d1 + d2
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

@@ -55,9 +55,18 @@ class ThreeLayerNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
+        # w = np.random.normal(weight_scale=weight_scale, size= ())
+        self.params = {}
+        self.params['W1'] = np.random.normal(scale=weight_scale, size= (input_dim, hidden_dim[0]))
+        self.params['b1'] = np.zeros(hidden_dim[0])
+        
+        self.params['W2'] = np.random.normal(scale=weight_scale, size= (hidden_dim[0], hidden_dim[1]))
+        self.params['b2'] = np.zeros(hidden_dim[1])
+        
+        self.params['W3'] = np.random.normal(scale=weight_scale, size= (hidden_dim[1], num_classes))
+        self.params['b3'] = np.zeros(num_classes)
 
-
-        pass
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -90,12 +99,19 @@ class ThreeLayerNet(object):
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        
+        test = {"alpha": self.alpha} 
 
+        affine_1 = affine_forward(x=X, w=self.params["W1"], b=self.params["b1"])
+        activations_1 = leaky_relu_forward(x=affine_1[0],lrelu_param= test)
 
+        affine_2 = affine_forward(x=activations_1[0], w=self.params["W2"], b= self.params["b2"])
+        activations_2 = leaky_relu_forward(x=affine_2[0], lrelu_param=test)
 
-
-
-        pass
+        affine_3 = affine_forward(x=activations_2[0], w=self.params["W3"], b=self.params["b3"])
+        
+        scores = affine_3[0]
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -120,10 +136,29 @@ class ThreeLayerNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
+        loss, dloss =  softmax_loss(scores,y)
+
+        regularization_loss = np.sum(np.power(self.params["W1"],2))  + np.sum(np.power(self.params["W2"],2))  +  np.sum(np.power(self.params["W3"],2))
+        loss = loss + 0.5 * self.reg * regularization_loss
 
 
+        daffin_3, grads["W3"], grads["b3"] = affine_backward(dloss, affine_3[1])
+        
+        dactivations_2 =leaky_relu_backward(daffin_3, activations_2[1])
+        daffin_2, grads["W2"], grads["b2"] = affine_backward(dactivations_2, affine_2[1])
 
-        pass
+        dactivations_1 =leaky_relu_backward(daffin_2, activations_1[1])
+        daffin_1, grads["W1"], grads["b1"] = affine_backward(dactivations_1,affine_1[1])
+
+
+        # regularizton grad 
+
+        grads["W1"] += self.reg * self.params["W1"] 
+        grads["W2"] += self.reg * self.params["W2"]
+        grads["W3"] += self.reg * self.params["W3"]         
+
+
+        # pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -186,10 +221,23 @@ class FullyConnectedNet(object):
         #                                                                          #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        
+        self.params['W1'] = np.random.normal(scale=weight_scale, size= (input_dim, hidden_dims[0]))
+        self.params['b1'] = np.zeros(hidden_dims[0])
+        
+        for i in range(1, self.num_layers-1):
+            self.params['W{}'.format(i+1)] = np.random.normal(scale=weight_scale, size= (hidden_dims[i-1], hidden_dims[i]))
+            self.params['b{}'.format(i+1)] = np.zeros(hidden_dims[i])
+
+        i = self.num_layers-1
+        self.params['W{}'.format(i+1)] = np.random.normal(scale=weight_scale, size= (hidden_dims[i-1], num_classes))
+        self.params['b{}'.format(i+1)] = np.zeros(num_classes)
+
+        for key in self.params.keys():
+            print(key)
 
 
-
-        pass
+    
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
