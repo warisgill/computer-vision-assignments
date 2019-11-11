@@ -304,9 +304,9 @@ class FullyConnectedNet(object):
         
         l2reg = 0
         for i in range(0, self.num_layers):
-            l2reg += np.sum(np.power(self.params["W{}".format(i+1)],2))
+            l2reg += 0.5 * self.reg * np.sum(np.power(self.params["W{}".format(i+1)],2))
 
-        l2reg = 0.5 * self.reg * l2reg
+        
         # *****END OFs YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
