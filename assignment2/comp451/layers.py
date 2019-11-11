@@ -233,7 +233,7 @@ def dropout_forward(x, dropout_param):
     if 'seed' in dropout_param:
         np.random.seed(dropout_param['seed'])
 
-    mask = None
+    mask = (np.random.rand(*x.shape) < p) / p
     out = None
 
     if mode == 'train':
@@ -243,8 +243,9 @@ def dropout_forward(x, dropout_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
-        pass
+         
+        out = x * mask
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -256,7 +257,7 @@ def dropout_forward(x, dropout_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        out = x
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -287,7 +288,7 @@ def dropout_backward(dout, cache):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dx = dout * mask
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -336,16 +337,40 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+    H = x.shape[2]
+    W = x.shape[3]
+    HH = w.shape[2]
+    WW = w.shape[3]
+    
+    N = x.shape[0]
+    F = w.shape[0]
+    H_dash = int(1 + (H + 2 * pad - HH) / stride)
+    W_dash = int(1 + (W + 2 * pad - WW) / stride)
+    
+    
+    
+    out = np.zeros((N,F,H_dash, W_dash))
+    
+    for i in range(N):
+        x_i = x[i,:,:,:]
+        
+        x_i_pad = np.zeros((x_i.shape[0],x_i.shape[1]+ 2 *pad , x_i.shape[2]+ 2*pad))
+        x_i_pad[:,pad:x_i.shape[1]+pad, pad: x_i.shape[2]+pad] = x_i
+        # print("Check", x_i.shape, x_i_pad.shape)
+        # print(x_i_pad)
+        for j in range(F):
+            for hight in range(H_dash):
+                for width in range(W_dash):
+                    temp  = x_i_pad[:,hight*stride: hight*stride+HH, width*stride:width*stride+ WW]
+                    # temp = np.pad(temp,[0,pad,pad])
+                    # print("Index Data for Filter shape",temp.shape)
+                    # print("Filter shape", w[j].shape)
+                    out[i,j,hight,width] = np.sum( np.multiply(temp , w[j])) + b[j]
 
 
 
-
-
-
-
-
-
-    pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -436,12 +461,34 @@ def max_pool_forward_naive(x, pool_param):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
+    H = x.shape[2]
+    W = x.shape[3]
 
+    stride = pool_param["stride"]
+    pool_height = pool_param["pool_height"]
+    pool_width = pool_param["pool_width"]
 
+    H_dash = int(1 + (H - pool_height) / stride)
+    W_dash = int(1 + (W - pool_width) / stride)
 
-
-    pass
-
+    out = np.zeros((x.shape[0], x.shape[1], H_dash, W_dash))
+    max_indexes = np.zeros((x.shape[0], x.shape[1], H_dash, W_dash))
+    for i in range(x.shape[0]):
+        x_i = x[i,:,:,:]
+        for c in range(x.shape[1]):
+            for height  in range(H_dash):
+                for width in range(W_dash):
+                   temp_array = x_i[c, height*stride: height*stride+pool_height, width*stride:width*stride+ pool_width]
+                   max = np.max(temp_array)
+                   
+                   index = np.where(temp_array==max)
+                   index = list(zip(index[0],index[1]))[0]
+                #    print("index shape", index)  
+                   out[i,c ,height, width] = max
+                #    print("check",index)
+                #    max_indexes[i,c ,height, width] = index
+    # pass
+    # pool_param["max_indexes"] = max_indexes
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -466,12 +513,46 @@ def max_pool_backward_naive(dout, cache):
     # TODO: Implement the max-pooling backward pass                           #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    x, pool_param = cache 
+    dx = np.zeros_like(x.shape)
 
 
+    H = x.shape[2]
+    W = x.shape[3]
 
+    stride = pool_param["stride"]
+    pool_height = pool_param["pool_height"]
+    pool_width = pool_param["pool_width"]
 
+    H_dash = int(1 + (H - pool_height) / stride)
+    W_dash = int(1 + (W - pool_width) / stride)
 
-    pass
+    # out = np.zeros((x.shape[0], x.shape[1], H_dash, W_dash))
+
+    # for i in range(x.shape[0]):
+    #     x_i = x[i,:,:,:]
+    #     for c in range(x.shape[1]):
+    #         for height  in range(H_dash):
+    #             for width in range(W_dash):
+    #                 out[i,c ,height, width]= np.max(x_i[c, height*stride: height*stride+pool_height, width*stride:width*stride+ pool_width])
+
+    dx = np.zeros(x.shape)
+    print("Shape dx, x", dx.shape, x.shape)
+    for i in range(x.shape[0]):
+        x_i = x[i,:,:,:]
+        for c in range(x.shape[1]):
+            for height  in range(H_dash):
+                for width in range(W_dash):
+                   temp_array = x_i[c, height*stride: height*stride+pool_height, width*stride:width*stride+ pool_width]
+                   max = np.amax(temp_array)
+                   index = np.where(temp_array==max)
+                    
+                   index = list(zip(index[0],index[1]))[0]
+                #    print(index)
+                   dx[i,c,height*stride: height*stride+pool_height, width*stride:width*stride+ pool_width][index[0], index[1]] = dout[i,c ,height, width] 
+               
+
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

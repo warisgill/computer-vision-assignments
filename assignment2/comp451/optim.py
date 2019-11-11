@@ -67,8 +67,12 @@ def sgd_momentum(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    mu = config["momentum"]   
+    lr = config["learning_rate"]
 
-    pass
+    v = (mu * v)  -  ( lr * dw) 
+    next_w = w + v
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -100,10 +104,14 @@ def sgd_nesterov_momentum(w, dw, config=None):
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    mu = config["momentum"]   
+    lr = config["learning_rate"]
 
+    v_prev = v 
 
-
-    pass
+    v= mu * v - lr * dw
+    w += -mu * v_prev + (1+ mu) * v
+    next_w = w
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -141,8 +149,17 @@ def rmsprop(w, dw, config=None):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
-    pass
+    # pass
 
+    cache = config["cache"]
+    decay_rate = config["decay_rate"]
+    lr = config["learning_rate"]
+    eps = config["epsilon"]
+
+    cache = decay_rate * cache + (1-decay_rate) * dw**2
+    w += -lr * dw/(np.sqrt(cache)+ eps)  
+    config["cache"] = cache
+    next_w = w
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -185,10 +202,29 @@ def adam(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    # cache = config["cache"]
+    # decay_rate = config["decay_rate"]
+    lr = config["learning_rate"]
+    eps = config["epsilon"]
+    beta1 = config["beta1"]
+    beta2 = config["beta2"]
 
+    m = config["m"]
+    v = config["v"]
+    t = config ["t"] +1
 
+    m = beta1*m + (1 -beta1) * dw
+    mt = m / (1-beta1**t)
+    v = beta2*v + (1-beta2)* (dw**2)
+    vt = v/ (1-beta2**t)
 
-    pass
+    next_w = w + ((-lr) * mt)/(np.sqrt(vt) + eps)  
+
+    # next_w = w
+    config["m"] = m
+    config["v"] = v
+    config["t"] = t
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

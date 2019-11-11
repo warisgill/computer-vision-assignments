@@ -138,10 +138,6 @@ class ThreeLayerNet(object):
 
         loss, dloss =  softmax_loss(scores,y)
 
-        regularization_loss = np.sum(np.power(self.params["W1"],2))  + np.sum(np.power(self.params["W2"],2))  +  np.sum(np.power(self.params["W3"],2))
-        loss = loss + 0.5 * self.reg * regularization_loss
-
-
         daffin_3, grads["W3"], grads["b3"] = affine_backward(dloss, affine_3[1])
         
         dactivations_2 =leaky_relu_backward(daffin_3, activations_2[1])
@@ -156,6 +152,12 @@ class ThreeLayerNet(object):
         grads["W1"] += self.reg * self.params["W1"] 
         grads["W2"] += self.reg * self.params["W2"]
         grads["W3"] += self.reg * self.params["W3"]         
+
+
+        
+
+        regularization_loss =  0.5 * self.reg * np.sum(np.power(self.params["W1"],2)) +  0.5 * self.reg * np.sum(np.power(self.params["W2"],2))  +   0.5 * self.reg * np.sum(np.power(self.params["W3"],2))
+        loss = loss + regularization_loss
 
 
         # pass
@@ -211,6 +213,7 @@ class FullyConnectedNet(object):
         self.num_layers = 1 + len(hidden_dims)
         self.dtype = dtype
         self.params = {}
+    
 
         ############################################################################
         # TODO: Initialize the parameters of the network, storing all values in    #
@@ -222,22 +225,19 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         
-        self.params['W1'] = np.random.normal(scale=weight_scale, size= (input_dim, hidden_dims[0]))
+        self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dims[0]) #np.random.normal(scale=weight_scale, size= (input_dim, hidden_dims[0]))
         self.params['b1'] = np.zeros(hidden_dims[0])
         
         for i in range(1, self.num_layers-1):
-            self.params['W{}'.format(i+1)] = np.random.normal(scale=weight_scale, size= (hidden_dims[i-1], hidden_dims[i]))
+            self.params['W{}'.format(i+1)] = weight_scale * np.random.randn(hidden_dims[i-1], hidden_dims[i])  #np.random.normal(scale=weight_scale, size= (hidden_dims[i-1], hidden_dims[i]))
             self.params['b{}'.format(i+1)] = np.zeros(hidden_dims[i])
 
         i = self.num_layers-1
-        self.params['W{}'.format(i+1)] = np.random.normal(scale=weight_scale, size= (hidden_dims[i-1], num_classes))
+        self.params['W{}'.format(i+1)] = weight_scale * np.random.randn(hidden_dims[-1], num_classes) #np.random.normal(scale=weight_scale, size= (hidden_dims[-1], num_classes))
         self.params['b{}'.format(i+1)] = np.zeros(num_classes)
 
-        for key in self.params.keys():
-            print(key)
-
-
-    
+        # for key in self.params.keys():
+        #     print(key, self.params[key].shape)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -283,13 +283,31 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
+        test = {"alpha": self.alpha}
+        out = None    
+        
+        store = []
+        store_dropout = []
+        for i in range(0, self.num_layers-1):
+            if i == 0:
+                out = X
+            out, cache = affine_lrelu_forward(x=out,w=self.params["W{}".format(i+1)], b=self.params["b{}".format(i+1)], lrelu_param= test )            
+            store.append(cache)
 
+            if self.use_dropout:
+                out,cache = dropout_forward(out, self.dropout_param)
+                store_dropout.append(cache)
 
+        
+        affine_last = affine_forward(x=out, w=self.params["W{}".format(self.num_layers)], b=self.params["b{}".format(self.num_layers)])
+        scores = affine_last[0]
+        
+        l2reg = 0
+        for i in range(0, self.num_layers):
+            l2reg += np.sum(np.power(self.params["W{}".format(i+1)],2))
 
-
-        pass
-
-        # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        l2reg = 0.5 * self.reg * l2reg
+        # *****END OFs YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -313,10 +331,24 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
+        loss, dout =  softmax_loss(scores,y)
+        loss = loss + l2reg 
+
+
+        dout, grads["W{}".format(self.num_layers)], grads["b{}".format(self.num_layers)] = affine_backward(dout, affine_last[1])
+        
+        grads["W{}".format(self.num_layers)] += self.reg * self.params["W{}".format(self.num_layers)]
+        
+        for i in range (0, len(store))[::-1]:
+          if self.use_dropout:
+              dout = dropout_backward(dout, store_dropout[i])
+          dout, dw, db = affine_lrelu_backward(dout,store[i])
+          grads["W{}".format(i+1)] = dw + self.reg * self.params["W{}".format(i+1)]
+          grads["b{}".format(i+1)] = db
 
 
 
-        pass
+        # pass
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
