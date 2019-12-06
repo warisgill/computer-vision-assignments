@@ -182,6 +182,10 @@ class CaptioningRNN(object):
         grads['W_vocab'] = dW_vocab
         grads['b_vocab'] = db_vocab
 
+
+        if self.gclip != 0:
+            grads = self.clip_grad_norm(grads,self.gclip)
+
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -204,8 +208,37 @@ class CaptioningRNN(object):
         # TODO: Implement gradient clipping using gclip value as the threshold.   #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        #  grads['W_embed'] = dW_embed
+        
 
-        pass
+        # # Initialize CNN -> hidden state projection parameters
+        # grads['W_proj'] = dW_proj
+        # grads['b_proj'] = db_proj
+
+        # # Initialize parameters for the RNN
+        # grads['Wx'] = dWx
+        # grads['Wh'] = dWh
+        # grads['b'] = db
+
+        # # Initialize output to vocab weights
+        # grads['W_vocab'] = dW_vocab
+        # grads['b_vocab'] = db_vocab
+
+        clipped_grads = grads
+
+        for key in clipped_grads.keys():
+
+            # print(key)
+
+            grad_norm =  np.sum(grads[key] * grads[key])
+
+            if grad_norm > gclip:
+                clipped_grads[key] *= (gclip/grad_norm)
+
+
+
+
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -269,8 +302,16 @@ class CaptioningRNN(object):
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        
+        
+        previous_h, _ = affine_forward(features, W_proj, b_proj)
+        embed, _ = word_embedding_forward(self._start, W_embed)
+        for i in range(1, max_length):
+            captions[:, 0] = self._start
+            embed, _ = word_embedding_forward(captions[:, i-1], W_embed)
+            previous_h, _ = rnn_step_forward(embed, previous_h, Wx, Wh, b)
+            scores, _ = affine_forward(previous_h, W_vocab, b_vocab)
+            captions[:, i] = np.argmax(scores, axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -334,7 +375,33 @@ class CaptioningRNN(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        previous_h, _ = affine_forward(features, W_proj, b_proj)
+        word_embed, _ = word_embedding_forward(self._start, W_embed)
+
+
+        # from scipy.special import softmax
+
+        for i in range(1, max_length):
+            captions[:, 0] = self._start
+            embed, _ = word_embedding_forward(captions[:, i-1], W_embed)
+            previous_h, _ = rnn_step_forward(embed, previous_h, Wx, Wh, b)
+            scores, _ = affine_forward(previous_h, W_vocab, b_vocab)
+            
+            
+            exps = np.exp(scores)
+            numerators = exps
+            denominator = 1 / np.sum(exps)
+            probs = numerators * denominator 
+            
+            
+
+            # print("hello",probs.shape)
+
+
+
+            
+            captions[:, i] = np.random.choice(range(len(scores)), p=None)
+            # captions[:, i] = np.argmax(scores, axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################

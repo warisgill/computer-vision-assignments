@@ -78,8 +78,8 @@ def rnn_step_backward(dnext_h, cache):
     dout = (1-out**2) * dnext_h
     
 
-    print(x.shape, Wx.shape, dout.shape)
-    print(prev_h.shape, Wh.shape)
+    # print(x.shape, Wx.shape, dout.shape)
+    # print(prev_h.shape, Wh.shape)
 
     db =  np.sum(dout, axis= 0)
     dx = np.dot(Wx, dout.T).T    
@@ -181,7 +181,7 @@ def rnn_backward(dh, cache):
 
     dh0 = np.zeros(dprev_h.shape) 
      
-    print(range(T)[::-1])
+    # print(range(T)[::-1])
 
     for i in range(T)[::-1]:
         # dx, dprev_h, dWx, dWh, db
